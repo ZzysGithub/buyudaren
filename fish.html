@@ -1,0 +1,180 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+
+		<title>捕鱼达人</title>
+	</head>
+
+	<body>
+		<div id="container">
+			<div id="main"  >
+				<div id="stage" style="margin: 0 auto; width: 800px; height: 480px;  text-align: center; vertical-align: middle" >
+
+					<canvas id="canvas"  width="800" height="480">
+						不支持画板对象时能看到
+					</canvas>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext('2d');
+
+			var bg = new Image();
+			bg.src = "images/bg.jpg";
+
+			//声明变量SCORE，表示捕鱼达人游戏中的分数
+			var SCORE = 0;
+			function Fish() {
+				this.x = 800;
+				this.y = Math.random() * (480 - 100);
+				var randomFish = parseInt(Math.random() * 11 + 1);
+				this.score = randomFish + 1;
+				var fish = [];
+				for (var i = 0; i < 10; i++) {
+					var fishImage = new Image();
+					fishImage.src = "images/fish" + randomFish + "_" + i + ".png";
+					fish[i] = fishImage;
+				}
+				this.frame = fish[0];
+				//定义probability属性，表示捕获鱼的概率
+				this.probability = randomFish;
+				var interval = 70;
+				var lastTime = 0;
+				function timeOut() {
+					var current = new Date().getTime();
+					var t = current - lastTime;
+					if (t >= interval) {
+						lastTime = current;
+						return true;
+					}
+					return false;
+				}
+
+				var index = 0;
+				this.step = function() {
+					if (timeOut()) {
+						this.x = this.x - 2;
+						this.frame = fish[index % 10];
+						index = index + 1;
+					}
+				}
+				this.paint = function(ctx) {
+					ctx.drawImage(this.frame, this.x, this.y);
+					//设置文字的大小为20px，文字的字体为微软雅黑
+					ctx.font = "20px 微软雅黑";
+					//设置文字的颜色为绿色
+					ctx.fillStyle = "green";
+					//在画布上写分数
+					ctx.fillText("SCORE:" + SCORE, 10, 20);
+				}
+			}
+
+			function Net() {
+				var NET = new Image();
+				NET.src = "images/net.png";
+				this.x = 0;
+				this.y = 0;
+				this.paint = function(ctx) {
+					ctx.drawImage(NET, this.x, this.y);
+				}
+			}
+
+
+			canvas.onmousemove = function(e) {
+				var mpoint = getPointOnCanvas(e.x, e.y);
+				net.x = mpoint.x - 80;
+				net.y = mpoint.y - 80;
+			}
+
+			canvas.onclick = function() {
+				for (var i = 0; i < allFish.length; i++) {
+					//调用netCatch方法
+					//netCatch();
+					//改变捕获鱼的概率
+					var n;
+					if(allFish[i].probability <= 5){
+						n = 0.7;
+						netCatch();
+					}else if(allFish[i].probability <= 9){
+						n = 0.5;
+						netCatch();
+					}else if(allFish[i].probability == 10){
+						n = 0.1;
+						netCatch();
+					}else{
+						n = 0.35;
+						netCatch();
+					}
+				}
+				//定义netCatch方法，判断鱼网是否捕到鱼
+				function netCatch() {
+					if ((allFish[i].x > (net.x - 50) &&
+					     allFish[i].x < (net.x + 160)) && 
+					    (allFish[i].y > (net.y - 48) &&
+					     allFish[i].y < (net.y + 160))&&
+					     Math.random() < n) {
+						//alert("增加相应的分数");
+						//若捕到鱼，则增加该鱼相应的分数
+						SCORE = SCORE + allFish[i].score;
+						//调用remove方法，删除被鱼网捕到的鱼对象
+						remove(i);
+					}
+				}
+			}
+			
+			//定义remove方法，删除被鱼网捕到鱼对象
+			function remove(i) {
+				allFish.splice(i, 1);
+			}
+
+			function getPointOnCanvas(x, y) {
+				var bbox = canvas.getBoundingClientRect();
+				return {
+					x : x - bbox.left,
+					y : y - bbox.top
+				};
+			}
+
+			//创建isActionTime方法，设置时间间隔
+			function isActionTime(lastTime, interval) {
+				if (lastTime == 0) {
+					return true;
+				}
+				//声明变量currentTime，记录当前的时间
+				var currentTime = new Date().getTime();
+				/*
+				 * 若当前时间减去上一次执行的时间大于等于时间间隔，
+				 * 返回true；否则，返回false。
+				 */
+				return currentTime - lastTime >= interval;
+			}
+
+			var allFish = [];
+			var net = new Net();
+			//声明变量lastTime，表示上一次产生鱼的时间
+			var lastTime = 0;
+			//声明变量interval，表示产生鱼的时间间隔
+			var interval = 800;
+			setInterval(function() {
+				ctx.drawImage(bg, 0, 0);
+				for (var i = 0; i < allFish.length; i++) {
+					allFish[i].paint(ctx);
+				}
+				for (var i = 0; i < allFish.length; i++) {
+					allFish[i].step();
+				}
+				net.paint(ctx);
+				//添加时间间隔
+				if (!isActionTime(lastTime, interval)) {
+					return;
+				}
+				//记录上一次产生鱼的时间
+				lastTime = new Date().getTime();
+				allFish[allFish.length] = new Fish();
+			}, 10);
+		</script>
+	</body>
+</html>
+
